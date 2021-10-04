@@ -1,4 +1,12 @@
-/venv/
 /source/config/config.json
 /*.log
+/*.xls
+/*.xlsx
 /source/config/credentials.json
+/.wdm/
+/*chromedriver.exe
+/*driver.zip
+/*drivers.json
+/source/main/.wdm/drivers.json
+/source/main/.wdm/drivers/chromedriver/win32/93.0.4577.63/driver.zip
+/source/main/.wdm/drivers/chromedriver/win32/93.0.4577.63/chromedriver.exe
