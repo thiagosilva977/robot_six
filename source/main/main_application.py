@@ -4,6 +4,7 @@ import argparse
 import datetime
 import json
 import multiprocessing
+import re
 import sys
 import time
 import traceback
@@ -67,6 +68,66 @@ class botname:
         os.startfile(path_file)
 
 
+    def run_program_table(self):
+
+        browser = func_selenium.initialize_webdriver(webdriver_type='chrome')
+        while True:
+            input('ENTER para iniciar.')
+            try:
+                print('Tentando capturar a tabela ..')
+                soup = bs4_functions.make_soup(browser.page_source)
+
+
+                tablename1 = 'table table-hover table-condensed emissao is-detailed'
+                tablename2 = 'table table-bordered'
+
+
+                'https://www.w3schools.com/html/html_tables.asp'
+
+                regex_torre = re.compile('.*customers.*')
+
+                table = soup.find("table", {"id": regex_torre})
+                columns = [i.get_text(strip=True) for i in table.find_all("th")]
+                data = []
+
+                for tr in table.find("tbody").find_all("tr"):
+                    data.append([td.get_text(strip=True) for td in tr.find_all("td")])
+
+                self.save_table(data=data, columns=columns)
+
+            except BaseException:
+                print('\n\n###### ERRO ####')
+                msg = traceback.format_exc()
+                print(msg)
+                print('\n##############\n\nNão foi possível acessar a tabela')
+
+
+    def run_program_check(self):
+
+        browser = func_selenium.initialize_webdriver(webdriver_type='chrome')
+        while True:
+            input('ENTER para iniciar.')
+            try:
+                print('Tentando checar itens ...')
+                #elements = browser.find_elements_by_xpath('//input[@id^="test-"]')
+                elements = browser.find_elements_by_css_selector("input[id^='myCh']")
+
+                print(len(elements))
+                for element in elements:
+                    element.click()
+
+                print('Todos os elementos checados')
+
+
+
+            except BaseException:
+                print('\n\n###### ERRO ####')
+                msg = traceback.format_exc()
+                print(msg)
+                print('\n##############\n\nNão foi possível checar itens')
+
+
+
 if __name__ == "__main__":
     # This application is responsible to get an argument and decides what runs.
 
@@ -83,7 +144,11 @@ if __name__ == "__main__":
 
     if execute_program == 'standard_initialization':
         botclass = botname()
-        botclass.step_1()
+        botclass.run_program_table()
+
+    elif 'checkonly' in execute_program:
+        botclass = botname()
+        botclass.run_program_check()
 
     elif 'anothercommand' in execute_program:
         print('anothercommand')
