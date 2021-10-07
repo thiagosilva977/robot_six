@@ -171,7 +171,7 @@ class botname:
 
 
             except BaseException:
-                print('\n\n###### ERRO ####')
+                print('\n\n###### ERROo ####')
                 msg = traceback.format_exc()
                 print(msg)
                 browser.switch_to.default_content()
