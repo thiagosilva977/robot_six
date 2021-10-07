@@ -15,7 +15,8 @@ import source.common.parsing_functions as parsing_functions
 import source.common.configuration_functions as config_functions
 from pathlib import Path
 import os
-
+import string
+import random
 
 class botname:
 
@@ -50,12 +51,23 @@ class botname:
     def step_2(self):
         print('step1')
 
+    def generate_filename(self):
+
+        now = datetime.datetime.now() # current date and time
+        S = 6  # number of characters in the string.
+        # call random.choices() string module to find the string in Uppercase + numeric data.
+        ran = ''.join(random.choices(string.ascii_uppercase + string.digits, k=S))
+
+        return str('ecac_')+str(ran)
+
+
     def save_table(self, data, columns):
         print('Saving Table')
 
-        download_path = config_functions.create_paths()
+        download_path = config_functions.create_paths(bot_name='e-CAC')
 
-        data_name = 'data'
+        data_name = self.generate_filename()
+
 
         path_file = str(str(download_path) + '\\' + str(data_name) + str(".xlsx"))
 
@@ -68,13 +80,30 @@ class botname:
         os.startfile(path_file)
 
 
-    def run_program_table(self):
+    def run_program_table_iframe(self):
 
         browser = func_selenium.initialize_webdriver(webdriver_type='chrome')
+
+        # remove this
+
+        browser.get('https://www.aliexpress.com/store/feedback-score/1665279.html')
+
         while True:
             input('ENTER para iniciar.')
             try:
+
                 print('Tentando capturar a tabela ..')
+
+                # IFRAME SWITCH
+
+                iframename = 'rating-displayer'
+
+                iframe = browser.find_element_by_xpath('//iframe[@id="'+str(iframename)+'"]')
+
+                browser.switch_to.frame(iframe)
+
+                print('iframe identificado')
+
                 soup = bs4_functions.make_soup(browser.page_source)
 
 
@@ -84,9 +113,13 @@ class botname:
 
                 'https://www.w3schools.com/html/html_tables.asp'
 
-                regex_torre = re.compile('.*customers.*')
+                'https://www.aliexpress.com/store/feedback-score/1665279.html'
 
-                table = soup.find("table", {"id": regex_torre})
+
+
+                regex_torre = re.compile('.*rating-table widthfixed.*')
+
+                table = soup.find("table", {"class": regex_torre})
                 columns = [i.get_text(strip=True) for i in table.find_all("th")]
                 data = []
 
@@ -95,10 +128,13 @@ class botname:
 
                 self.save_table(data=data, columns=columns)
 
+                browser.switch_to.default_content()
+
             except BaseException:
                 print('\n\n###### ERRO ####')
                 msg = traceback.format_exc()
                 print(msg)
+                browser.switch_to.default_content()
                 print('\n##############\n\nNão foi possível acessar a tabela')
 
 
@@ -109,6 +145,19 @@ class botname:
             input('ENTER para iniciar.')
             try:
                 print('Tentando checar itens ...')
+
+
+
+
+                iframename = 'rating-displayer'
+
+                iframe = browser.find_element_by_xpath('//iframe[@id="'+str(iframename)+'"]')
+
+                browser.switch_to.frame(iframe)
+
+
+
+
                 #elements = browser.find_elements_by_xpath('//input[@id^="test-"]')
                 elements = browser.find_elements_by_css_selector("input[id^='myCh']")
 
@@ -118,12 +167,15 @@ class botname:
 
                 print('Todos os elementos checados')
 
+                browser.switch_to.default_content()
 
 
             except BaseException:
                 print('\n\n###### ERRO ####')
                 msg = traceback.format_exc()
                 print(msg)
+                browser.switch_to.default_content()
+
                 print('\n##############\n\nNão foi possível checar itens')
 
 
@@ -144,7 +196,7 @@ if __name__ == "__main__":
 
     if execute_program == 'standard_initialization':
         botclass = botname()
-        botclass.run_program_table()
+        botclass.run_program_table_iframe()
 
     elif 'checkonly' in execute_program:
         botclass = botname()
