@@ -86,7 +86,7 @@ class botname:
 
         # remove this
 
-        browser.get('https://www.aliexpress.com/store/feedback-score/1665279.html')
+        #browser.get('https://www.aliexpress.com/store/feedback-score/1665279.html')
 
         while True:
             input('ENTER para iniciar.')
@@ -96,13 +96,13 @@ class botname:
 
                 # IFRAME SWITCH
 
-                iframename = 'rating-displayer'
+                iframename = 'frmApp'
 
                 iframe = browser.find_element_by_xpath('//iframe[@id="'+str(iframename)+'"]')
 
                 browser.switch_to.frame(iframe)
 
-                print('iframe identificado')
+                print('iframe identificado !!!!')
 
                 soup = bs4_functions.make_soup(browser.page_source)
 
@@ -114,10 +114,17 @@ class botname:
                 'https://www.w3schools.com/html/html_tables.asp'
 
                 'https://www.aliexpress.com/store/feedback-score/1665279.html'
+                ''
+                namedocument = None
+                try:
+                    namedocument = browser.find_element_by_xpath('//span[@id="LabelParametros"]').text
 
+                except:
+                    pass
 
+                print('namedocument: ',namedocument)
 
-                regex_torre = re.compile('.*rating-table widthfixed.*')
+                regex_torre = re.compile('.*dataGrid.*')
 
                 table = soup.find("table", {"class": regex_torre})
                 columns = [i.get_text(strip=True) for i in table.find_all("th")]
