@@ -16,7 +16,7 @@ def read_custom_configs():
         credential_json = json.load(myfile)
 
     json_inputs = {
-        'input_pasta': credential_json['PASTA_DE_DOWNLOADS'],
+        'input_pasta': credential_json['PASTA_DOWNLOAD_ARQUIVOS'],
 
     }
     return json_inputs
@@ -47,5 +47,32 @@ def create_paths(bot_name='default'):
         os.mkdir(os.path.dirname(download_path))
 
     download_path = Path(str(REPOSITORY_PATH) + "/source/working_directory/downloads/" + bot_name)
+
+    return download_path
+
+
+def organize_custom_path(bot_name='default',cnpj='desconhecido'):
+    """
+    Creates default download path.
+    :param cnpj:
+    :param bot_name:
+    :return: path to downloads
+    """
+    REPOSITORY_PATH = read_custom_configs()
+
+    custom_download_path = REPOSITORY_PATH.get('input_pasta')
+
+    download_path = Path(str(custom_download_path) + '/' + bot_name + "/test.txt")
+    if not os.path.exists(os.path.dirname(download_path)):
+        os.mkdir(os.path.dirname(download_path))
+
+    custom_download_path = Path(str(custom_download_path) + '/' + bot_name)
+
+
+    download_path = Path(str(custom_download_path) + '/' + cnpj + "/test.txt")
+    if not os.path.exists(os.path.dirname(download_path)):
+        os.mkdir(os.path.dirname(download_path))
+
+    download_path = Path(str(custom_download_path) + '/' + cnpj)
 
     return download_path

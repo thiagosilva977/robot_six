@@ -33,16 +33,16 @@ class Projetoecac:
 
         return str('ecac_') + str(ran)
 
-    def save_table(self, data, columns,cnpj='NaN',nome='NaN',data_arrecadacao='NaN'):
+    def save_table(self, data, columns, cnpj='NaN', nome='NaN', data_arrecadacao='NaN'):
         print('Saving Table')
 
-        download_path = config_functions.create_paths(bot_name='e-CAC')
+        download_path = config_functions.organize_custom_path(bot_name='Programa e-CAC', cnpj=cnpj)
 
-        data_name = self.generate_filename()
+        data_name = str(cnpj + '_' + str(data_arrecadacao).replace('a', '_')).replace(' ', '').replace('/', '-')
 
         path_file = str(str(download_path) + '\\' + str(data_name) + str(".xlsx"))
 
-
+        print(path_file)
 
         df = pd.DataFrame(data, columns=columns)
 
@@ -53,13 +53,11 @@ class Projetoecac:
         df.drop(df.columns[[0, 1, 11]], axis=1, inplace=True)
         df = df.iloc[1:]
 
-
         df["VALOR_TOTAL"] = df["VALOR_TOTAL"].str.replace(".", "").str.replace(",", ".").astype(float)
 
-        #df["VALOR_TOTAL"] = pd.to_numeric(df["VALOR_TOTAL"], downcast="float")
+        # df["VALOR_TOTAL"] = pd.to_numeric(df["VALOR_TOTAL"], downcast="float")
 
-        #df['PERIODO_APURACAO'] = pd.to_datetime(df['PERIODO_APURACAO'], format="%m/%d/%Y")
-
+        # df['PERIODO_APURACAO'] = pd.to_datetime(df['PERIODO_APURACAO'], format="%m/%d/%Y")
 
         values_cod_receita = []
 
@@ -70,8 +68,6 @@ class Projetoecac:
 
         df.insert(7, "DESCR_RECEITA", values_cod_receita, True)
 
-
-
         if cnpj == 'NaN':
             pass
         else:
@@ -80,8 +76,6 @@ class Projetoecac:
                 values_cnpj.append(str(cnpj))
 
             df.insert(0, "CNPJ", values_cnpj, True)
-
-
 
         if nome == 'NaN':
             pass
@@ -92,9 +86,6 @@ class Projetoecac:
 
             df.insert(1, "NOME", values_nome, True)
 
-
-
-
         if data_arrecadacao == 'NaN':
             pass
         else:
@@ -103,10 +94,6 @@ class Projetoecac:
                 values_data_arrecadacao.append(str(data_arrecadacao))
 
             df.insert(2, "PERIODO_ARRECADACAO", values_data_arrecadacao, True)
-
-
-
-
 
         """writer = pd.ExcelWriter(path_file, engine='xlsxwriter')
         df.to_excel(writer, sheet_name='Sheet1')
@@ -123,9 +110,8 @@ class Projetoecac:
 
         writer.save()
 
-
-        #time.sleep(4554)
-        #df.to_excel(path_file, index=False)
+        # time.sleep(4554)
+        # df.to_excel(path_file, index=False)
 
         print('\n\nOpening file: ', path_file)
 
@@ -138,9 +124,14 @@ class Projetoecac:
         # remove this
 
         # browser.get('https://www.aliexpress.com/store/feedback-score/1665279.html')
-
+        print('Aguarde ...')
+        time.sleep(3)
         while True:
-            input('ENTER para iniciar.')
+            clear = lambda: os.system('cls')
+            clear()
+            input('Pressione ENTER para iniciar.')
+            clear = lambda: os.system('cls')
+            clear()
             try:
 
                 print('Tentando capturar a tabela ..')
@@ -153,21 +144,10 @@ class Projetoecac:
 
                 browser.switch_to.frame(iframe)
 
-                print('iframe identificado !!!!')
-
-                soup = bs4_functions.make_soup(browser.page_source)
-
                 """ PARSING DAS INFOS """
-                namedocument = None
-                try:
-                    namedocument = browser.find_element_by_xpath('//span[@id="LabelParametros"]').text
+                self.transform_to_data(html=browser.page_source)
 
-                except:
-                    pass
-
-                print('namedocument: ', namedocument)
-
-                regex_torre = re.compile('.*dataGrid.*')
+                """regex_torre = re.compile('.*dataGrid.*')
 
                 table = soup.find("table", {"class": regex_torre})
                 columns = [i.get_text(strip=True) for i in table.find_all("th")]
@@ -176,7 +156,7 @@ class Projetoecac:
                 for tr in table.find("tbody").find_all("tr"):
                     data.append([td.get_text(strip=True) for td in tr.find_all("td")])
 
-                self.save_table(data=data, columns=columns)
+                self.save_table(data=data, columns=columns)"""
 
                 browser.switch_to.default_content()
 
@@ -221,7 +201,6 @@ class Projetoecac:
 
                 print('\n##############\n\nNão foi possível checar itens')
 
-
     def import_lista_tributos(self):
         print('listando tributos')
         file_errors_location = 'D:\\freela\\robot_six\\Lista de tributos.xlsx'
@@ -232,7 +211,6 @@ class Projetoecac:
 
         for key, value in df['CODIGO_IMPOSTO'].iteritems():
             codigos_imposto.append(value)
-
 
         tipo_imposto = []
 
@@ -246,8 +224,8 @@ class Projetoecac:
 
         for i in range(len(codigos_imposto)):
             tributos_dict.append({
-                'codigo':codigos_imposto[i],
-                'tipo':tipo_imposto[i]
+                'codigo': codigos_imposto[i],
+                'tipo': tipo_imposto[i]
 
             })
 
@@ -257,10 +235,9 @@ class Projetoecac:
         tributo = dbstyle.obtain_tipo_tributo(valor=str(855))
         print(tributo)
 
-    def table_final(self):
-
-        f = codecs.open("D:\\freela\\robot_six\\html elementos.html", 'r')
-        html = f.read()
+    def transform_to_data(self, html):
+        """f = codecs.open("D:\\freela\\robot_six\\html elementos.html", 'r')
+        html = f.read()"""
 
         soup = bs4_functions.make_soup(html)
 
@@ -278,16 +255,14 @@ class Projetoecac:
         for tr in table.find("tbody").find_all("tr"):
             data.append([td.get_text(strip=True) for td in tr.find_all("td")])
 
-
-
         try:
             cnpj = 'NaN'
             nome = 'NaN'
             data_arrecadacao = 'NaN'
 
-            params = soup.find('span',{'id':'LabelParametros'}).text
+            params = soup.find('span', {'id': 'LabelParametros'}).text
 
-            cnpj = params.split('Nome:')[0].split('CNPJ:')[1].strip().replace('.','').replace('-','').replace('/','')
+            cnpj = params.split('Nome:')[0].split('CNPJ:')[1].strip().replace('.', '').replace('-', '').replace('/', '')
 
             print(cnpj)
 
@@ -298,7 +273,7 @@ class Projetoecac:
             data_arrecadacao = params.split('Faixa de valores:')[0].split('Data de Arrecada')[1].split(':')[1].strip()
 
             print(data_arrecadacao)
-            self.save_table(data=data, columns=custom_columns,cnpj=cnpj,nome=nome,data_arrecadacao=data_arrecadacao)
+            self.save_table(data=data, columns=custom_columns, cnpj=cnpj, nome=nome, data_arrecadacao=data_arrecadacao)
 
         except:
             self.save_table(data=data, columns=custom_columns)
@@ -307,10 +282,7 @@ class Projetoecac:
 if __name__ == "__main__":
     # This application is responsible to get an argument and decides what runs.
 
-    bot_name = 'TEST'
-    botclass = Projetoecac()
-    botclass.table_final()
-    sys.exit()
+    bot_name = 'ECAC'
 
     # Gets arguments from .bat or .sh file
     parser = argparse.ArgumentParser()
@@ -322,12 +294,14 @@ if __name__ == "__main__":
     # Args treatment
 
     if execute_program == 'standard_initialization':
-        botclass = botname()
-        botclass.table_final()
+        botclass = Projetoecac()
+        botclass.run_program_table_iframe()
 
-    elif 'checkonly' in execute_program:
-        botclass = botname()
-        botclass.run_program_check()
+    elif 'test_program' in execute_program:
+        f = codecs.open("./source/assets/html elementos.html", 'r')
+        html = f.read()
+        botclass = Projetoecac()
+        botclass.transform_to_data(html=html)
 
     elif 'anothercommand' in execute_program:
         print('anothercommand')
