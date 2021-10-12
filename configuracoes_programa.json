@@ -1,5 +1,16 @@
 {
-  "PASTA_DOWNLOAD_ARQUIVOS": "C:\\Users\\thiag\\Desktop\\Nova pasta"
+  "PASTAS_FUNCIONAMENTO": {
+    "PASTA_DOWNLOAD_ARQUIVOS": "C:\\Users\\thiag\\Desktop\\Nova pasta"
+  },
+  "CONTROLE": {
+    "ABRIR_AUTOMATICAMENTE_XLSX": false
+  },
+  "BUSCA_AUTOMATIZADA": {
+    "DATA_INICIO": "01/01/2021",
+    "DATA_FIM": "30/08/2021"
+
+  }
+
 
 
 }

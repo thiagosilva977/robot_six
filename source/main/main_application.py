@@ -13,6 +13,7 @@ import source.common.selenium_functions as func_selenium
 import source.common.bs4_functions as bs4_functions
 import source.common.parsing_functions as parsing_functions
 import source.common.configuration_functions as config_functions
+import source.common.input_functions as input_functions
 from pathlib import Path
 import os
 import string
@@ -33,7 +34,7 @@ class Projetoecac:
 
         return str('ecac_') + str(ran)
 
-    def save_table(self, data, columns, cnpj='NaN', nome='NaN', data_arrecadacao='NaN'):
+    def save_table(self, data, columns, cnpj='NaN', nome='NaN', data_arrecadacao='NaN',open_auto=False):
         print('Saving Table')
 
         download_path = config_functions.organize_custom_path(bot_name='Programa e-CAC', cnpj=cnpj)
@@ -114,8 +115,8 @@ class Projetoecac:
         # df.to_excel(path_file, index=False)
 
         print('\n\nOpening file: ', path_file)
-
-        os.startfile(path_file)
+        if open_auto:
+            os.startfile(path_file)
 
     def run_program_table_iframe(self):
 
@@ -133,6 +134,9 @@ class Projetoecac:
             clear = lambda: os.system('cls')
             clear()
             try:
+                configs = config_functions.read_custom_configs()
+
+                open_auto = configs.get('abrir_auto')
 
                 print('Tentando capturar a tabela ..')
 
@@ -145,20 +149,105 @@ class Projetoecac:
                 browser.switch_to.frame(iframe)
 
                 """ PARSING DAS INFOS """
-                self.transform_to_data(html=browser.page_source)
+                self.transform_to_data(html=browser.page_source,open_auto=open_auto)
 
-                """regex_torre = re.compile('.*dataGrid.*')
-
-                table = soup.find("table", {"class": regex_torre})
-                columns = [i.get_text(strip=True) for i in table.find_all("th")]
-                data = []
-
-                for tr in table.find("tbody").find_all("tr"):
-                    data.append([td.get_text(strip=True) for td in tr.find_all("td")])
-
-                self.save_table(data=data, columns=columns)"""
 
                 browser.switch_to.default_content()
+
+            except BaseException:
+                print('\n\n###### ERRO ####')
+                msg = traceback.format_exc()
+                print(msg)
+                browser.switch_to.default_content()
+                print('\n##############\n\nNão foi possível acessar a tabela')
+
+    def run_program_table_iframe_automated(self):
+
+        browser = func_selenium.initialize_webdriver(webdriver_type='chrome')
+
+        # remove this
+
+        # browser.get('https://www.aliexpress.com/store/feedback-score/1665279.html')
+        print('Aguarde ...')
+        time.sleep(3)
+        while True:
+            clear = lambda: os.system('cls')
+            clear()
+            input('Pressione ENTER para iniciar.')
+            clear = lambda: os.system('cls')
+            clear()
+            try:
+
+                configs = config_functions.read_custom_configs()
+
+                start_date = configs.get('start_date')
+                end_date = configs.get('end_date')
+                open_auto = configs.get('abrir_auto')
+
+                print(start_date, end_date)
+
+                period_to_search = input_functions.dates_between_two_dates(start_date=start_date, end_date=end_date)
+
+                print('Periodos para buscar: ', period_to_search)
+
+                for i in range(len(period_to_search) - 1):
+                    print('Buscando periodo: ', period_to_search[i], period_to_search[i + 1])
+
+                    current_start_date = period_to_search[i]
+                    current_end_date = period_to_search[i + 1]
+
+                    browser.find_element_by_xpath('').send_keys(current_start_date)
+                    browser.find_element_by_xpath('').send_keys(current_end_date)
+                    browser.find_element_by_xpath('').click()
+
+                    func_selenium.wait_loading(MAXTIME=20, XPATH='', browser=browser)
+
+                    print('Tentando capturar a tabela ..')
+
+                    # IFRAME SWITCH
+
+                    iframename = 'frmApp'
+
+                    iframe = browser.find_element_by_xpath('//iframe[@id="' + str(iframename) + '"]')
+
+                    browser.switch_to.frame(iframe)
+
+                    """ PARSING DAS INFOS """
+                    number_data = self.count_data(html=browser.page_source)
+                    if number_data >= 998:
+                        new_period_search = input_functions.dates_between_two_dates(start_date=current_start_date,
+                                                                                    end_date=current_end_date,
+                                                                                    frequency='d')
+                        browser.switch_to.default_content()
+                        browser.back()
+                        time.sleep(8)
+                        for j in range(len(new_period_search) - 1):
+                            print('Buscando periodo: ',new_period_search[j], new_period_search[j + 1])
+
+                            current_start_date = new_period_search[j]
+                            current_end_date = new_period_search[j + 1]
+
+                            browser.find_element_by_xpath('').send_keys(current_start_date)
+                            browser.find_element_by_xpath('').send_keys(current_end_date)
+                            browser.find_element_by_xpath('').click()
+
+                            func_selenium.wait_loading(MAXTIME=20, XPATH='', browser=browser)
+
+                            print('Tentando capturar a tabela ..')
+
+                            # IFRAME SWITCH
+
+                            iframename = 'frmApp'
+
+                            iframe = browser.find_element_by_xpath('//iframe[@id="' + str(iframename) + '"]')
+
+                            browser.switch_to.frame(iframe)
+                            self.transform_to_data(html=browser.page_source,open_auto=open_auto)
+
+                    else:
+                        self.transform_to_data(html=browser.page_source,open_auto=open_auto)
+                        browser.switch_to.default_content()
+                        browser.back()
 
             except BaseException:
                 print('\n\n###### ERRO ####')
@@ -235,9 +324,18 @@ class Projetoecac:
         tributo = dbstyle.obtain_tipo_tributo(valor=str(855))
         print(tributo)
 
-    def transform_to_data(self, html):
-        """f = codecs.open("D:\\freela\\robot_six\\html elementos.html", 'r')
-        html = f.read()"""
+    def count_data(self, html):
+        soup = bs4_functions.make_soup(html)
+        regex_torre = re.compile('.*dataGrid.*')
+        table = soup.find("table", {"class": regex_torre})
+        data = []
+
+        for tr in table.find("tbody").find_all("tr"):
+            data.append([td.get_text(strip=True) for td in tr.find_all("td")])
+
+        return len(data)
+
+    def transform_to_data(self, html,open_auto=True):
 
         soup = bs4_functions.make_soup(html)
 
@@ -273,10 +371,11 @@ class Projetoecac:
             data_arrecadacao = params.split('Faixa de valores:')[0].split('Data de Arrecada')[1].split(':')[1].strip()
 
             print(data_arrecadacao)
-            self.save_table(data=data, columns=custom_columns, cnpj=cnpj, nome=nome, data_arrecadacao=data_arrecadacao)
+            self.save_table(data=data, columns=custom_columns, cnpj=cnpj, nome=nome, data_arrecadacao=data_arrecadacao,
+                            open_auto=open_auto)
 
         except:
-            self.save_table(data=data, columns=custom_columns)
+            self.save_table(data=data, columns=custom_columns,open_auto=open_auto)
 
 
 if __name__ == "__main__":
@@ -296,6 +395,10 @@ if __name__ == "__main__":
     if execute_program == 'standard_initialization':
         botclass = Projetoecac()
         botclass.run_program_table_iframe()
+
+    elif execute_program == 'auto_search':
+        botclass = Projetoecac()
+        botclass.run_program_table_iframe_automated()
 
     elif 'test_program' in execute_program:
         f = codecs.open("./source/assets/html elementos.html", 'r')

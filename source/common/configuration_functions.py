@@ -16,7 +16,10 @@ def read_custom_configs():
         credential_json = json.load(myfile)
 
     json_inputs = {
-        'input_pasta': credential_json['PASTA_DOWNLOAD_ARQUIVOS'],
+        'input_pasta': credential_json['PASTAS_FUNCIONAMENTO']['PASTA_DOWNLOAD_ARQUIVOS'],
+        'start_date': credential_json['BUSCA_AUTOMATIZADA']['DATA_INICIO'],
+        'end_date': credential_json['BUSCA_AUTOMATIZADA']['DATA_FIM'],
+        'abrir_auto': credential_json['CONTROLE']['ABRIR_AUTOMATICAMENTE_XLSX'],
 
     }
     return json_inputs
