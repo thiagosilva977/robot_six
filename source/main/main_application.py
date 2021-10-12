@@ -1,25 +1,19 @@
 import argparse
-import json
-import argparse
+import codecs
 import datetime
-import json
-import multiprocessing
+import os
+import random
 import re
-import sys
+import string
 import time
 import traceback
+
 import pandas as pd
-import source.common.selenium_functions as func_selenium
+
 import source.common.bs4_functions as bs4_functions
-import source.common.parsing_functions as parsing_functions
 import source.common.configuration_functions as config_functions
 import source.common.input_functions as input_functions
-from pathlib import Path
-import os
-import string
-import random
-import codecs
-import xlsxwriter
+import source.common.selenium_functions as func_selenium
 import source.main.dbstyle as dbstyle
 
 
@@ -335,7 +329,7 @@ class Projetoecac:
 
         return len(data)
 
-    def transform_to_data(self, html,open_auto=True):
+    def transform_to_data(self, html,open_auto=False):
 
         soup = bs4_functions.make_soup(html)
 
