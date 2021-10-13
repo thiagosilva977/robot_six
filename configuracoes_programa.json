@@ -3,7 +3,7 @@
     "PASTA_DOWNLOAD_ARQUIVOS": "C:\\Users\\thiag\\Desktop\\Nova pasta"
   },
   "CONTROLE": {
-    "ABRIR_AUTOMATICAMENTE_XLSX": false
+    "ABRIR_AUTOMATICAMENTE_XLSX": true
   },
   "BUSCA_AUTOMATIZADA": {
     "DATA_INICIO": "01/01/2021",

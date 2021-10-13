@@ -5,6 +5,7 @@ import os
 import random
 import re
 import string
+import sys
 import time
 import traceback
 
@@ -295,14 +296,20 @@ class Projetoecac:
 
     def import_lista_tributos(self):
         print('listando tributos')
-        file_errors_location = 'D:\\freela\\robot_six\\Lista de tributos.xlsx'
-        df = pd.read_excel(file_errors_location)
+        file_errors_location = 'D:\\freela\\robot_six\\lista_tributos.xlsx'
+
+        print(file_errors_location)
+        df = pd.read_excel(file_errors_location,engine='openpyxl')
         print(df)
 
         codigos_imposto = []
 
         for key, value in df['CODIGO_IMPOSTO'].iteritems():
-            codigos_imposto.append(value)
+            if len(str(value))<4:
+                while len(str(value))<4:
+                    value = '0'+str(value)
+
+            codigos_imposto.append(str(value))
 
         tipo_imposto = []
 
@@ -316,7 +323,7 @@ class Projetoecac:
 
         for i in range(len(codigos_imposto)):
             tributos_dict.append({
-                'codigo': codigos_imposto[i],
+                'codigo': str(codigos_imposto[i]),
                 'tipo': tipo_imposto[i]
 
             })
@@ -386,6 +393,7 @@ if __name__ == "__main__":
 
     bot_name = 'ECAC'
 
+
     # Gets arguments from .bat or .sh file
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--to_execute', required=True, type=str, help="Program that will be initialized")
@@ -407,7 +415,7 @@ if __name__ == "__main__":
         f = codecs.open("./source/assets/html elementos.html", 'r')
         html = f.read()
         botclass = Projetoecac()
-        botclass.transform_to_data(html=html)
+        botclass.transform_to_data(html=html,open_auto=True)
 
     elif 'anothercommand' in execute_program:
         print('anothercommand')
