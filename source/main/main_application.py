@@ -122,6 +122,8 @@ class Projetoecac:
         # browser.get('https://www.aliexpress.com/store/feedback-score/1665279.html')
         print('Aguarde ...')
         time.sleep(3)
+        clear = lambda: os.system('cls')
+        clear()
         while True:
             clear = lambda: os.system('cls')
             clear()
@@ -145,7 +147,6 @@ class Projetoecac:
 
                 """ PARSING DAS INFOS """
                 self.transform_to_data(html=browser.page_source,open_auto=open_auto)
-
 
                 browser.switch_to.default_content()
 
