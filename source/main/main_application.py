@@ -187,14 +187,15 @@ class Projetoecac:
                 for i in range(len(period_to_search) - 1):
                     print('Buscando periodo: ', period_to_search[i], period_to_search[i + 1])
 
-                    current_start_date = period_to_search[i]
-                    current_end_date = period_to_search[i + 1]
+                    current_start_date = str(period_to_search[i]).replace('-','/')
+                    current_end_date = str(period_to_search[i + 1]).replace('-','/')
 
-                    browser.find_element_by_xpath('').send_keys(current_start_date)
-                    browser.find_element_by_xpath('').send_keys(current_end_date)
-                    browser.find_element_by_xpath('').click()
+                    browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoInicial"]').send_keys(current_start_date)
+                    browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoFinal"]').send_keys(current_end_date)
+                    browser.find_element_by_xpath('//input[@id="botaoConsultar"]').click()
+                    time.sleep(5)
 
-                    func_selenium.wait_loading(MAXTIME=20, XPATH='', browser=browser)
+                    func_selenium.wait_loading(MAXTIME=15, XPATH='//div[@id="conteudo"]', browser=browser)
 
                     print('Tentando capturar a tabela ..')
 
@@ -214,18 +215,20 @@ class Projetoecac:
                                                                                     frequency='d')
                         browser.switch_to.default_content()
                         browser.back()
-                        time.sleep(8)
+                        time.sleep(5)
                         for j in range(len(new_period_search) - 1):
                             print('Buscando periodo: ',new_period_search[j], new_period_search[j + 1])
 
-                            current_start_date = new_period_search[j]
-                            current_end_date = new_period_search[j + 1]
+                            current_start_date = str(new_period_search[j]).replace('-','/')
+                            current_end_date = str(new_period_search[j + 1]).replace('-','/')
 
-                            browser.find_element_by_xpath('').send_keys(current_start_date)
-                            browser.find_element_by_xpath('').send_keys(current_end_date)
-                            browser.find_element_by_xpath('').click()
+                            browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoInicial"]').send_keys(current_start_date)
+                            browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoFinal"]').send_keys(current_end_date)
+                            browser.find_element_by_xpath('//input[@id="botaoConsultar"]').click()
 
-                            func_selenium.wait_loading(MAXTIME=20, XPATH='', browser=browser)
+                            time.sleep(5)
+
+                            func_selenium.wait_loading(MAXTIME=15, XPATH='//div[@id="conteudo"]', browser=browser)
 
                             print('Tentando capturar a tabela ..')
 
@@ -238,10 +241,16 @@ class Projetoecac:
                             browser.switch_to.frame(iframe)
                             self.transform_to_data(html=browser.page_source,open_auto=open_auto)
 
+                            browser.switch_to.default_content()
+                            browser.back()
+                            time.sleep(8)
+
                     else:
                         self.transform_to_data(html=browser.page_source,open_auto=open_auto)
                         browser.switch_to.default_content()
                         browser.back()
+                        time.sleep(5)
+
 
             except BaseException:
                 print('\n\n###### ERRO ####')
