@@ -40,7 +40,7 @@ class Projetoecac:
 
         return str('pdf_handler_') + str(ran)
 
-    def save_table(self, data, columns, cnpj='NaN', nome='NaN', data_arrecadacao='NaN',open_auto=False):
+    def save_table(self, data, columns, cnpj='NaN', nome='NaN', data_arrecadacao='NaN', open_auto=False):
         print('Saving Table')
 
         download_path = config_functions.organize_custom_path(bot_name='Programa e-CAC', cnpj=cnpj)
@@ -68,7 +68,6 @@ class Projetoecac:
 
         for key, value in df['CODIGO_RECEITA'].iteritems():
             values_cod_receita.append(str(dbstyle.obtain_tipo_tributo(valor=str(value))))
-
 
         df.insert(7, "DESCR_RECEITA", values_cod_receita, True)
 
@@ -121,26 +120,27 @@ class Projetoecac:
         if open_auto:
             os.startfile(path_file)
 
-    def verify_documento_existente(self,valor,lista_items):
+    def verify_documento_existente(self, valor, lista_items):
         flag = False
+
         principal = 0.0
         juros = 0.0
         multa = 0.0
 
         for i in range(len(lista_items)):
-            if valor == lista_items[i].get('documento'):
+
+            if lista_items[i].get('documento') in valor:
                 flag = True
                 principal = lista_items[i].get('principal')
-                juros =lista_items[i].get('juros')
-                multa =lista_items[i].get('multa')
+                juros = lista_items[i].get('juros')
+                multa = lista_items[i].get('multa')
 
             else:
                 pass
-        return flag, principal,juros,multa
 
+        return flag, principal, juros, multa
 
-
-    def save_table_v2(self, data, columns, cnpj='NaN', nome='NaN', data_arrecadacao='NaN',open_auto=False,
+    def save_table_v2(self, data, columns, cnpj='NaN', nome='NaN', data_arrecadacao='NaN', open_auto=False,
                       values_pdf='[]'):
 
         print('Agrupando Informações ...')
@@ -169,7 +169,6 @@ class Projetoecac:
 
         for key, value in df['CODIGO_RECEITA'].iteritems():
             values_cod_receita.append(str(dbstyle.obtain_tipo_tributo(valor=str(value))))
-
 
         df.insert(7, "DESCR_RECEITA", values_cod_receita, True)
 
@@ -204,14 +203,13 @@ class Projetoecac:
         df.to_excel(writer, sheet_name='Sheet1')
         writer.save()"""
 
-
         # NOVOS CAMPOS
         values_principal = []
         values_juros = []
         values_multas = []
 
         for key, value in df['NUMERO_DOCUMENTO'].iteritems():
-            exists,principal,juros,multa = self.verify_documento_existente(valor=str(value),lista_items=values_pdf)
+            exists, principal, juros, multa = self.verify_documento_existente(valor=value, lista_items=values_pdf)
             values_principal.append(principal)
             values_juros.append(juros)
             values_multas.append(multa)
@@ -219,8 +217,6 @@ class Projetoecac:
         df.insert(12, "PRINCIPAL", values_principal, True)
         df.insert(13, "JUROS", values_juros, True)
         df.insert(14, "MULTA", values_multas, True)
-
-
 
         writer = pd.ExcelWriter(path_file)
         df.to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
@@ -269,7 +265,7 @@ class Projetoecac:
                 browser.switch_to.frame(iframe)
 
                 """ PARSING DAS INFOS """
-                self.transform_to_data(html=browser.page_source,open_auto=open_auto)
+                self.transform_to_data(html=browser.page_source, open_auto=open_auto)
 
                 browser.switch_to.default_content()
 
@@ -280,9 +276,9 @@ class Projetoecac:
                 browser.switch_to.default_content()
                 print('\n##############\n\nNão foi possível acessar a tabela')
 
-    def run_program_table_iframe_maisdados(self,browser_download_pdf):
+    def run_program_table_iframe_maisdados(self, browser_download_pdf):
 
-        browser = func_selenium.initialize_webdriver(webdriver_type='chrome',download_path=browser_download_pdf)
+        browser = func_selenium.initialize_webdriver(webdriver_type='chrome', download_path=browser_download_pdf)
 
         # remove this
 
@@ -314,12 +310,12 @@ class Projetoecac:
 
                 checkboxes = browser.find_elements_by_xpath('//input[contains(@id,"_CheckBoxPagamentos")]')
 
-                print('Número de Checkboxes: '+str(len(checkboxes)))
+                print('Número de Checkboxes: ' + str(len(checkboxes)))
                 print('\nInicializando Download de PDFs\n')
 
                 bar = progress.bar.ChargingBar(str('Download PDFs'), max=len(checkboxes))
 
-                range_checkboxes = int(len(checkboxes)/10)+1
+                range_checkboxes = int(len(checkboxes) / 10) + 1
 
                 current_checkbox = 0
                 last_checkbox = 0
@@ -349,7 +345,7 @@ class Projetoecac:
                 time.sleep(10)
 
                 """ PARSING DAS INFOS """
-                self.transform_to_data_v2(html=html_inicial_pagina,open_auto=open_auto,
+                self.transform_to_data_v2(html=html_inicial_pagina, open_auto=open_auto,
                                           pdf_download_path=browser_download_pdf)
 
                 browser.switch_to.default_content()
@@ -393,11 +389,13 @@ class Projetoecac:
                 for i in range(len(period_to_search) - 1):
                     print('Buscando periodo: ', period_to_search[i], period_to_search[i + 1])
 
-                    current_start_date = str(period_to_search[i]).replace('-','/')
-                    current_end_date = str(period_to_search[i + 1]).replace('-','/')
+                    current_start_date = str(period_to_search[i]).replace('-', '/')
+                    current_end_date = str(period_to_search[i + 1]).replace('-', '/')
 
-                    browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoInicial"]').send_keys(current_start_date)
-                    browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoFinal"]').send_keys(current_end_date)
+                    browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoInicial"]').send_keys(
+                        current_start_date)
+                    browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoFinal"]').send_keys(
+                        current_end_date)
                     browser.find_element_by_xpath('//input[@id="botaoConsultar"]').click()
                     time.sleep(5)
 
@@ -423,13 +421,15 @@ class Projetoecac:
                         browser.back()
                         time.sleep(5)
                         for j in range(len(new_period_search) - 1):
-                            print('Buscando periodo: ',new_period_search[j], new_period_search[j + 1])
+                            print('Buscando periodo: ', new_period_search[j], new_period_search[j + 1])
 
-                            current_start_date = str(new_period_search[j]).replace('-','/')
-                            current_end_date = str(new_period_search[j + 1]).replace('-','/')
+                            current_start_date = str(new_period_search[j]).replace('-', '/')
+                            current_end_date = str(new_period_search[j + 1]).replace('-', '/')
 
-                            browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoInicial"]').send_keys(current_start_date)
-                            browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoFinal"]').send_keys(current_end_date)
+                            browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoInicial"]').send_keys(
+                                current_start_date)
+                            browser.find_element_by_xpath('//input[@id="campoDataArrecadacaoFinal"]').send_keys(
+                                current_end_date)
                             browser.find_element_by_xpath('//input[@id="botaoConsultar"]').click()
 
                             time.sleep(5)
@@ -445,14 +445,14 @@ class Projetoecac:
                             iframe = browser.find_element_by_xpath('//iframe[@id="' + str(iframename) + '"]')
 
                             browser.switch_to.frame(iframe)
-                            self.transform_to_data(html=browser.page_source,open_auto=open_auto)
+                            self.transform_to_data(html=browser.page_source, open_auto=open_auto)
 
                             browser.switch_to.default_content()
                             browser.back()
                             time.sleep(8)
 
                     else:
-                        self.transform_to_data(html=browser.page_source,open_auto=open_auto)
+                        self.transform_to_data(html=browser.page_source, open_auto=open_auto)
                         browser.switch_to.default_content()
                         browser.back()
                         time.sleep(5)
@@ -504,15 +504,15 @@ class Projetoecac:
         file_errors_location = 'D:\\freela\\robot_six\\lista_tributos.xlsx'
 
         print(file_errors_location)
-        df = pd.read_excel(file_errors_location,engine='openpyxl')
+        df = pd.read_excel(file_errors_location, engine='openpyxl')
         print(df)
 
         codigos_imposto = []
 
         for key, value in df['CODIGO_IMPOSTO'].iteritems():
-            if len(str(value))<4:
-                while len(str(value))<4:
-                    value = '0'+str(value)
+            if len(str(value)) < 4:
+                while len(str(value)) < 4:
+                    value = '0' + str(value)
 
             codigos_imposto.append(str(value))
 
@@ -550,7 +550,7 @@ class Projetoecac:
 
         return len(data)
 
-    def transform_to_data(self, html,open_auto=False):
+    def transform_to_data(self, html, open_auto=False):
 
         soup = bs4_functions.make_soup(html)
 
@@ -590,9 +590,9 @@ class Projetoecac:
                             open_auto=open_auto)
 
         except:
-            self.save_table(data=data, columns=custom_columns,open_auto=open_auto)
+            self.save_table(data=data, columns=custom_columns, open_auto=open_auto)
 
-    def pdf_to_text(self,path):
+    def pdf_to_text(self, path):
         """
         Function responsible for parse pdf to text.
         :param path:
@@ -608,7 +608,7 @@ class Projetoecac:
 
         return text
 
-    def parse_pdf(self,pdf_text):
+    def parse_pdf(self, pdf_text):
 
         list_tributos = []
 
@@ -624,7 +624,6 @@ class Projetoecac:
                 juros = None
                 total = None
 
-
                 current_card = cards[i + 1]
 
                 documento_id = current_card.split('\nCNPJ\n')[0].split(' ')
@@ -637,6 +636,7 @@ class Projetoecac:
                 multa = cards_numeros.split(' ')[1]
                 juros = cards_numeros.split(' ')[2]
                 total = cards_numeros.split(' ')[3]
+
                 """print('\n\n------------- \n\n')
 
                 print(current_card)
@@ -647,14 +647,12 @@ class Projetoecac:
                 print('Valor Juros: ', juros)
                 print('Valor Total: ', total)"""
 
-
-
                 current_file = {
-                    "documento":documento_id.replace(' ','').replace('\n',''),
-                    "principal":float(principal.replace(' ','').replace('\n','').replace(".", "").replace(",", ".")),
-                    "multa":float(multa.replace(' ','').replace('\n','').replace(".", "").replace(",", ".")),
-                    "juros":float(juros.replace(' ','').replace('\n','').replace(".", "").replace(",", ".")),
-                    "total":float(total.replace(' ','').replace('\n','').replace(".", "").replace(",", "."))
+                    "documento": str(documento_id.replace(' ', '').replace('\n', '')),
+                    "principal": float(principal.replace(' ', '').replace('\n', '').replace(".", "").replace(",", ".")),
+                    "multa": float(multa.replace(' ', '').replace('\n', '').replace(".", "").replace(",", ".")),
+                    "juros": float(juros.replace(' ', '').replace('\n', '').replace(".", "").replace(",", ".")),
+                    "total": float(total.replace(' ', '').replace('\n', '').replace(".", "").replace(",", "."))
                 }
 
                 json_cars.append(current_file)
@@ -666,11 +664,9 @@ class Projetoecac:
 
         return json_cars
 
+    def obtain_values_pdf(self, download_pdf_path):
 
-
-    def obtain_values_pdf(self,download_pdf_path):
-
-        pdf_files = glob.glob(str(download_pdf_path)+"\\*.pdf")
+        pdf_files = glob.glob(str(download_pdf_path) + "\\*.pdf")
         list_pdf_parseds = []
         print('\n')
         bar = progress.bar.ChargingBar(str('Lendo PDFs'), max=len(pdf_files))
@@ -681,29 +677,27 @@ class Projetoecac:
                 try:
                     parsed_pdf = self.parse_pdf(pdf_text=text_pdf)
                 except:
-                    print('\nObteve um erro: Não foi possivel extrair as informações do PDF: ',pdf_files[i])
+                    print('\nObteve um erro: Não foi possivel extrair as informações do PDF: ', pdf_files[i])
             except:
-                print('\nObteve um erro: Não foi possivel transformar PDF para texto: ',pdf_files[i])
+                print('\nObteve um erro: Não foi possivel transformar PDF para texto: ', pdf_files[i])
             bar.next()
-
 
             if len(parsed_pdf) == 0:
                 pass
             else:
-                list_pdf_parseds = list_pdf_parseds+parsed_pdf
+                list_pdf_parseds = list_pdf_parseds + parsed_pdf
 
         return list_pdf_parseds
 
-
-    def transform_to_data_v2(self, html,open_auto=False,pdf_download_path=None):
+    def transform_to_data_v2(self, html, open_auto=False, pdf_download_path=None):
 
         values_pdf = self.obtain_values_pdf(download_pdf_path=pdf_download_path)
 
-        print('\nNúmero de Informações de PDFs capturados: '+str(len(values_pdf)))
+        print('\nNúmero de Informações de PDFs capturados: ' + str(len(values_pdf)))
 
         if len(values_pdf) == 0:
             print('\nSalvando da forma padrão')
-            self.transform_to_data(html=html,open_auto=open_auto)
+            self.transform_to_data(html=html, open_auto=open_auto)
         else:
 
             soup = bs4_functions.make_soup(html)
@@ -729,25 +723,26 @@ class Projetoecac:
 
                 params = soup.find('span', {'id': 'LabelParametros'}).text
 
-                cnpj = params.split('Nome:')[0].split('CNPJ:')[1].strip().replace('.', '').replace('-', '').replace('/', '')
+                cnpj = params.split('Nome:')[0].split('CNPJ:')[1].strip().replace('.', '').replace('-', '').replace('/',
+                                                                                                                    '')
 
                 nome = params.split('Data de Arrecada')[0].split('Nome: ')[1].strip()
 
+                data_arrecadacao = params.split('Faixa de valores:')[0].split('Data de Arrecada')[1].split(':')[
+                    1].strip()
 
-                data_arrecadacao = params.split('Faixa de valores:')[0].split('Data de Arrecada')[1].split(':')[1].strip()
-
-                self.save_table_v2(data=data, columns=custom_columns, cnpj=cnpj, nome=nome, data_arrecadacao=data_arrecadacao,
-                                open_auto=open_auto,values_pdf=values_pdf)
+                self.save_table_v2(data=data, columns=custom_columns, cnpj=cnpj, nome=nome,
+                                   data_arrecadacao=data_arrecadacao,
+                                   open_auto=open_auto, values_pdf=values_pdf)
 
             except:
-                self.save_table_v2(data=data, columns=custom_columns,open_auto=open_auto,values_pdf=values_pdf)
+                self.save_table_v2(data=data, columns=custom_columns, open_auto=open_auto, values_pdf=values_pdf)
 
 
 if __name__ == "__main__":
     # This application is responsible to get an argument and decides what runs.
 
     bot_name = 'ECAC'
-
 
     # Gets arguments from .bat or .sh file
     parser = argparse.ArgumentParser()
@@ -776,7 +771,7 @@ if __name__ == "__main__":
         f = codecs.open("./source/assets/html elementos.html", 'r')
         html = f.read()
         botclass = Projetoecac()
-        botclass.transform_to_data(html=html,open_auto=True)
+        botclass.transform_to_data(html=html, open_auto=True)
 
     elif 'testar_program_v2' in execute_program:
         f = codecs.open("./source/assets/html elementos.html", 'r')
@@ -786,8 +781,8 @@ if __name__ == "__main__":
         pdf_download_path = config_functions.path_to_pdf(bot_name='testé_pdf')
         print(pdf_download_path)
 
-        botclass.transform_to_data_v2(html=html,open_auto=True,pdf_download_path=pdf_download_path)
-        #botclass.run_program_table_iframe_maisdados(browser_download_pdf=pdf_download_path)
+        botclass.transform_to_data_v2(html=html, open_auto=True, pdf_download_path=pdf_download_path)
+        # botclass.run_program_table_iframe_maisdados(browser_download_pdf=pdf_download_path)
 
     elif 'anothercommand' in execute_program:
         print('anothercommand')
