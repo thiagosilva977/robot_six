@@ -54,6 +54,35 @@ def create_paths(bot_name='default'):
     return download_path
 
 
+def path_to_pdf(bot_name='pdf_handler'):
+    """
+    Creates default download path.
+    :param bot_name:
+    :return: path to downloads
+    """
+    REPOSITORY_PATH = Path(__file__).parent.parent.parent
+
+    download_path = Path(str(REPOSITORY_PATH) + "/source/working_directory")
+    if not os.path.exists(os.path.dirname(download_path)):
+        os.mkdir(os.path.dirname(download_path))
+
+    download_path = Path(str(REPOSITORY_PATH) + "/source/working_directory/test.txt")
+    if not os.path.exists(os.path.dirname(download_path)):
+        os.mkdir(os.path.dirname(download_path))
+
+    download_path = Path(str(REPOSITORY_PATH) + "/source/working_directory/downloads/test.txt")
+    if not os.path.exists(os.path.dirname(download_path)):
+        os.mkdir(os.path.dirname(download_path))
+
+    download_path = Path(str(REPOSITORY_PATH) + "/source/working_directory/downloads/" + bot_name + "/test.txt")
+    if not os.path.exists(os.path.dirname(download_path)):
+        os.mkdir(os.path.dirname(download_path))
+
+    download_path = Path(str(REPOSITORY_PATH) + "/source/working_directory/downloads/" + bot_name)
+
+    return download_path
+
+
 def organize_custom_path(bot_name='default',cnpj='desconhecido'):
     """
     Creates default download path.

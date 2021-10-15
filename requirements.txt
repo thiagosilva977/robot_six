@@ -32,3 +32,4 @@ urllib3==1.26.7
 webdriver-manager==3.4.2
 zstandard==0.15.2
 XlsxWriter
+tika

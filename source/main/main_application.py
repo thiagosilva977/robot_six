@@ -8,8 +8,9 @@ import string
 import sys
 import time
 import traceback
-
+import glob
 import pandas as pd
+from tika import parser as tikaparser
 
 import source.common.bs4_functions as bs4_functions
 import source.common.configuration_functions as config_functions
@@ -28,6 +29,15 @@ class Projetoecac:
         ran = ''.join(random.choices(string.ascii_uppercase + string.digits, k=S))
 
         return str('ecac_') + str(ran)
+
+    def generate_filename_pdf(self):
+
+        now = datetime.datetime.now()  # current date and time
+        S = 6  # number of characters in the string.
+        # call random.choices() string module to find the string in Uppercase + numeric data.
+        ran = ''.join(random.choices(string.ascii_uppercase + string.digits, k=S))
+
+        return str('pdf_handler_') + str(ran)
 
     def save_table(self, data, columns, cnpj='NaN', nome='NaN', data_arrecadacao='NaN',open_auto=False):
         print('Saving Table')
@@ -113,6 +123,130 @@ class Projetoecac:
         if open_auto:
             os.startfile(path_file)
 
+    def verify_documento_existente(self,valor,lista_items):
+        flag = False
+        principal = 0.0
+        juros = 0.0
+        multa = 0.0
+
+        for i in range(len(lista_items)):
+            if valor == lista_items[i].get('documento'):
+                flag = True
+                principal = lista_items[i].get('principal')
+                juros =lista_items[i].get('juros')
+                multa =lista_items[i].get('multa')
+
+            else:
+                pass
+        return flag, principal,juros,multa
+
+
+
+    def save_table_v2(self, data, columns, cnpj='NaN', nome='NaN', data_arrecadacao='NaN',open_auto=False,
+                      values_pdf='[]'):
+        print('Saving Table')
+
+        download_path = config_functions.organize_custom_path(bot_name='Programa e-CAC', cnpj=cnpj)
+
+        data_name = str(cnpj + '_' + str(data_arrecadacao).replace('a', '_')).replace(' ', '').replace('/', '-')
+
+        path_file = str(str(download_path) + '\\' + str(data_name) + str(".xlsx"))
+
+        print(path_file)
+
+        df = pd.DataFrame(data, columns=columns)
+
+        """df = df.drop(['columnsname'], axis=1)"""
+        """df = df.drop(['SaldoDisponível'], axis=1)"""
+
+        # Removing some Unused columns
+        df.drop(df.columns[[0, 1, 11]], axis=1, inplace=True)
+        df = df.iloc[1:]
+
+        df["VALOR_TOTAL"] = df["VALOR_TOTAL"].str.replace(".", "").str.replace(",", ".").astype(float)
+
+        # df["VALOR_TOTAL"] = pd.to_numeric(df["VALOR_TOTAL"], downcast="float")
+
+        # df['PERIODO_APURACAO'] = pd.to_datetime(df['PERIODO_APURACAO'], format="%m/%d/%Y")
+
+        values_cod_receita = []
+
+        for key, value in df['CODIGO_RECEITA'].iteritems():
+            values_cod_receita.append(str(dbstyle.obtain_tipo_tributo(valor=str(value))))
+
+        print(len(values_cod_receita))
+
+        df.insert(7, "DESCR_RECEITA", values_cod_receita, True)
+
+        if cnpj == 'NaN':
+            pass
+        else:
+            values_cnpj = []
+            for key, value in df['CODIGO_RECEITA'].iteritems():
+                values_cnpj.append(str(cnpj))
+
+            df.insert(0, "CNPJ", values_cnpj, True)
+
+        if nome == 'NaN':
+            pass
+        else:
+            values_nome = []
+            for key, value in df['CODIGO_RECEITA'].iteritems():
+                values_nome.append(str(nome))
+
+            df.insert(1, "NOME", values_nome, True)
+
+        if data_arrecadacao == 'NaN':
+            pass
+        else:
+            values_data_arrecadacao = []
+            for key, value in df['CODIGO_RECEITA'].iteritems():
+                values_data_arrecadacao.append(str(data_arrecadacao))
+
+            df.insert(2, "PERIODO_ARRECADACAO", values_data_arrecadacao, True)
+
+        """writer = pd.ExcelWriter(path_file, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='Sheet1')
+        writer.save()"""
+
+
+        # NOVOS CAMPOS
+        values_principal = []
+        values_juros = []
+        values_multas = []
+
+        for key, value in df['NUMERO_DOCUMENTO'].iteritems():
+            exists,principal,juros,multa = self.verify_documento_existente(valor=value,lista_items=values_pdf)
+            if exists:
+                print(exists)
+            values_principal.append(principal)
+            values_juros.append(juros)
+            values_multas.append(multa)
+
+        df.insert(13, "PRINCIPAL", values_principal, True)
+        df.insert(14, "JUROS", values_juros, True)
+        df.insert(15, "MULTA", values_multas, True)
+
+
+
+        writer = pd.ExcelWriter(path_file)
+        df.to_excel(writer, sheet_name='Sheet1', index=False, na_rep='NaN')
+
+        # Auto-adjust columns' width
+        for column in df:
+            column_width = max(df[column].astype(str).map(len).max(), len(column))
+            col_idx = df.columns.get_loc(column)
+            writer.sheets['Sheet1'].set_column(col_idx, col_idx, column_width)
+
+        writer.save()
+
+        # time.sleep(4554)
+        # df.to_excel(path_file, index=False)
+
+        print('\n\nOpening file: ', path_file)
+        if open_auto:
+            os.startfile(path_file)
+
     def run_program_table_iframe(self):
 
         browser = func_selenium.initialize_webdriver(webdriver_type='chrome')
@@ -147,6 +281,77 @@ class Projetoecac:
 
                 """ PARSING DAS INFOS """
                 self.transform_to_data(html=browser.page_source,open_auto=open_auto)
+
+                browser.switch_to.default_content()
+
+            except BaseException:
+                print('\n\n###### ERRO ####')
+                msg = traceback.format_exc()
+                print(msg)
+                browser.switch_to.default_content()
+                print('\n##############\n\nNão foi possível acessar a tabela')
+
+
+    def run_program_table_iframe_maisdados(self,browser_download_pdf):
+
+        browser = func_selenium.initialize_webdriver(webdriver_type='chrome',download_path=browser_download_pdf)
+
+        # remove this
+
+        # browser.get('https://www.aliexpress.com/store/feedback-score/1665279.html')
+        print('Aguarde ...')
+        time.sleep(3)
+        clear = lambda: os.system('cls')
+        clear()
+        while True:
+            input('\n\n\nPressione ENTER para iniciar.')
+            try:
+                configs = config_functions.read_custom_configs()
+
+                open_auto = configs.get('abrir_auto')
+
+                print('Tentando capturar a tabela ..')
+
+                # IFRAME SWITCH
+
+                iframename = 'frmApp'
+                iframe = browser.find_element_by_xpath('//iframe[@id="' + str(iframename) + '"]')
+                browser.switch_to.frame(iframe)
+                html_inicial_pagina = browser.page_source
+
+
+                """ HANDLING DE PDFs """
+
+                botao_download = browser.find_element_by_xpath('//input[@id=""]')
+
+                checkboxes = browser.find_elements_by_xpath('//input[@id=""]')
+
+                range_checkboxes = int(len(checkboxes)/10)+1
+
+                current_checkbox = 0
+                last_checkbox = 0
+                for i in range(range_checkboxes):
+                    for j in range(10):
+                        checkboxes[current_checkbox].click()
+                        current_checkbox = current_checkbox+1
+                    time.sleep(1)
+                    botao_download.click()
+                    time.sleep(5)
+                    last_checkbox = current_checkbox
+                    for j in range(10):
+                        checkboxes[last_checkbox].click()
+                        last_checkbox = last_checkbox - 1
+                    time.sleep(1)
+
+
+                """"""""""""""""""
+
+                print('Aguardando por Downloads não concluídos...\nAguarde 10 segundos...')
+                time.sleep(10)
+
+                """ PARSING DAS INFOS """
+                self.transform_to_data_v2(html=html_inicial_pagina,open_auto=open_auto,
+                                          pdf_download_path=browser_download_pdf)
 
                 browser.switch_to.default_content()
 
@@ -389,6 +594,149 @@ class Projetoecac:
             self.save_table(data=data, columns=custom_columns,open_auto=open_auto)
 
 
+    def pdf_to_text(self,path):
+        """
+        Function responsible for parse pdf to text.
+        :param path:
+        :return:
+        """
+        raw = tikaparser.from_file(path)
+        text = raw['content']
+        return text
+
+    def parse_pdf(self,pdf_text):
+
+        list_tributos = []
+
+        cards = pdf_text.split('Data de Vencimento')
+
+        print('Testando arquivo ..\n')
+
+        json_cars = []
+
+        for i in range(len(cards) - 1):
+            try:
+                documento_id = None
+                principal = None
+                multa = None
+                juros = None
+                total = None
+
+
+                current_card = cards[i + 1]
+
+                documento_id = current_card.split('\nCNPJ\n')[0].split(' ')
+
+                documento_id = str(documento_id[len(documento_id) - 1]).strip()
+
+                cards_numeros = current_card.split('\nTotais ')[1].split('\nComprovante emitido às')[0]
+
+                principal = cards_numeros.split(' ')[0]
+                multa = cards_numeros.split(' ')[1]
+                juros = cards_numeros.split(' ')[2]
+                total = cards_numeros.split(' ')[3]
+
+                """print('\n\n------------- \n\n')
+                print('Num doc extraido: ', documento_id)
+                print('Valor Principal: ', principal)
+                print('Valor Multa: ', multa)
+                print('Valor Juros: ', juros)
+                print('Valor Total: ', total)"""
+
+                current_file = {
+                    "documento":documento_id.replace(' ','').replace('\n',''),
+                    "principal":float(principal.replace(' ','').replace('\n','').replace(".", "").replace(",", ".")),
+                    "multa":float(multa.replace(' ','').replace('\n','').replace(".", "").replace(",", ".")),
+                    "juros":float(juros.replace(' ','').replace('\n','').replace(".", "").replace(",", ".")),
+                    "total":float(total.replace(' ','').replace('\n','').replace(".", "").replace(",", "."))
+                }
+
+                json_cars.append(current_file)
+            except:
+                print('Obteve um erro na extração: valor individual do pdf')
+        return json_cars
+
+
+
+    def obtain_values_pdf(self,download_pdf_path):
+
+        pdf_files = glob.glob(str(download_pdf_path)+"\\*.pdf")
+        print(pdf_files)
+
+        list_pdf_parseds = []
+
+
+        for i in range(len(pdf_files)):
+            parsed_pdf = 0
+            try:
+                text_pdf = self.pdf_to_text(path=pdf_files[i])
+                try:
+                    parsed_pdf = self.parse_pdf(pdf_text=text_pdf)
+                except:
+                    print('Obteve um erro: Não foi possivel extrair as informações do PDF: ',pdf_files[i])
+            except:
+                print('Obteve um erro: Não foi possivel transformar PDF para texto: ',pdf_files[i])
+
+
+            if len(parsed_pdf) == 0:
+                pass
+            else:
+                list_pdf_parseds = list_pdf_parseds+parsed_pdf
+
+        return list_pdf_parseds
+
+
+    def transform_to_data_v2(self, html,open_auto=False,pdf_download_path=None):
+
+        values_pdf = self.obtain_values_pdf(download_pdf_path=pdf_download_path)
+
+        print(len(values_pdf))
+        if len(values_pdf) == 0:
+            print('\nSalvando da forma padrão')
+            self.transform_to_data(html=html,open_auto=open_auto)
+        else:
+
+            soup = bs4_functions.make_soup(html)
+
+            regex_torre = re.compile('.*dataGrid.*')
+
+            table = soup.find("table", {"class": regex_torre})
+            columns = [i.get_text(strip=True) for i in table.find_all("th")]
+            data = []
+            custom_columns = ['none', 'none', 'TIPO_DOCUMENTO', 'NUMERO_DOCUMENTO',
+                              'DETALHAR_COMPOSICAO', 'PERIODO_APURACAO',
+                              'DATA_ARRECADACAO', 'DATA_VENCIMENTO',
+                              'CODIGO_RECEITA', 'NUMERO_REFERENCIA', 'VALOR_TOTAL',
+                              'SALDO_DISPONIVEL']
+
+            for tr in table.find("tbody").find_all("tr"):
+                data.append([td.get_text(strip=True) for td in tr.find_all("td")])
+
+            try:
+                cnpj = 'NaN'
+                nome = 'NaN'
+                data_arrecadacao = 'NaN'
+
+                params = soup.find('span', {'id': 'LabelParametros'}).text
+
+                cnpj = params.split('Nome:')[0].split('CNPJ:')[1].strip().replace('.', '').replace('-', '').replace('/', '')
+
+                print(cnpj)
+
+                nome = params.split('Data de Arrecada')[0].split('Nome: ')[1].strip()
+
+                print(nome)
+
+                data_arrecadacao = params.split('Faixa de valores:')[0].split('Data de Arrecada')[1].split(':')[1].strip()
+
+                print(data_arrecadacao)
+                self.save_table_v2(data=data, columns=custom_columns, cnpj=cnpj, nome=nome, data_arrecadacao=data_arrecadacao,
+                                open_auto=open_auto,values_pdf=values_pdf)
+
+            except:
+                self.save_table_v2(data=data, columns=custom_columns,open_auto=open_auto,values_pdf=values_pdf)
+
+
 if __name__ == "__main__":
     # This application is responsible to get an argument and decides what runs.
 
@@ -408,6 +756,12 @@ if __name__ == "__main__":
         botclass = Projetoecac()
         botclass.run_program_table_iframe()
 
+    if execute_program == 'run_more_data':
+        botclass = Projetoecac()
+
+        pdf_download_path = config_functions.path_to_pdf(bot_name=botclass.generate_filename_pdf())
+        botclass.run_program_table_iframe_maisdados(browser_download_pdf=pdf_download_path)
+
     elif execute_program == 'auto_search':
         botclass = Projetoecac()
         botclass.run_program_table_iframe_automated()
@@ -417,6 +771,16 @@ if __name__ == "__main__":
         html = f.read()
         botclass = Projetoecac()
         botclass.transform_to_data(html=html,open_auto=True)
+
+    elif 'testar_program_v2' in execute_program:
+        f = codecs.open("./source/assets/html elementos.html", 'r')
+        html = f.read()
+        botclass = Projetoecac()
+
+        pdf_download_path = config_functions.path_to_pdf(bot_name='teste_pdf')
+        print(pdf_download_path)
+
+        botclass.transform_to_data_v2(html=html,open_auto=True,pdf_download_path=pdf_download_path)
 
     elif 'anothercommand' in execute_program:
         print('anothercommand')
