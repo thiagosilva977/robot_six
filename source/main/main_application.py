@@ -211,14 +211,14 @@ class Projetoecac:
         values_multas = []
 
         for key, value in df['NUMERO_DOCUMENTO'].iteritems():
-            exists,principal,juros,multa = self.verify_documento_existente(valor=value,lista_items=values_pdf)
+            exists,principal,juros,multa = self.verify_documento_existente(valor=str(value),lista_items=values_pdf)
             values_principal.append(principal)
             values_juros.append(juros)
             values_multas.append(multa)
 
-        df.insert(13, "PRINCIPAL", values_principal, True)
-        df.insert(14, "JUROS", values_juros, True)
-        df.insert(15, "MULTA", values_multas, True)
+        df.insert(12, "PRINCIPAL", values_principal, True)
+        df.insert(13, "JUROS", values_juros, True)
+        df.insert(14, "MULTA", values_multas, True)
 
 
 
@@ -631,19 +631,23 @@ class Projetoecac:
 
                 documento_id = str(documento_id[len(documento_id) - 1]).strip()
 
-                cards_numeros = current_card.split('\nTotais ')[1].split('\nComprovante emitido às')[0]
+                cards_numeros = current_card.split('\nComprovante emitido às')[0].split('\nTotais ')[1]
 
                 principal = cards_numeros.split(' ')[0]
                 multa = cards_numeros.split(' ')[1]
                 juros = cards_numeros.split(' ')[2]
                 total = cards_numeros.split(' ')[3]
-
                 """print('\n\n------------- \n\n')
+
+                print(current_card)
+                print('\n----TEXTTOPARSE------ \n')
                 print('Num doc extraido: ', documento_id)
                 print('Valor Principal: ', principal)
                 print('Valor Multa: ', multa)
                 print('Valor Juros: ', juros)
                 print('Valor Total: ', total)"""
+
+
 
                 current_file = {
                     "documento":documento_id.replace(' ','').replace('\n',''),
@@ -656,6 +660,10 @@ class Projetoecac:
                 json_cars.append(current_file)
             except:
                 print('Obteve um erro na extração: valor individual do pdf')
+
+        """print('Finished')
+        time.sleep(5415)"""
+
         return json_cars
 
 
@@ -775,11 +783,11 @@ if __name__ == "__main__":
         html = f.read()
         botclass = Projetoecac()
 
-        pdf_download_path = config_functions.path_to_pdf(bot_name='teste_pdf')
+        pdf_download_path = config_functions.path_to_pdf(bot_name='testé_pdf')
         print(pdf_download_path)
 
-        #botclass.transform_to_data_v2(html=html,open_auto=True,pdf_download_path=pdf_download_path)
-        botclass.run_program_table_iframe_maisdados(browser_download_pdf=pdf_download_path)
+        botclass.transform_to_data_v2(html=html,open_auto=True,pdf_download_path=pdf_download_path)
+        #botclass.run_program_table_iframe_maisdados(browser_download_pdf=pdf_download_path)
 
     elif 'anothercommand' in execute_program:
         print('anothercommand')

@@ -283,6 +283,9 @@ def initialize_webdriver(webdriver_type=None, headless=False, download_path=None
             if custom_useragent != '':
                 print('Using custom useragent: ', custom_useragent)
                 options.add_argument(str('user-agent=' + custom_useragent))
+
+            prefs = {'download.default_directory': str(download_path)}
+            options.add_experimental_option('prefs', prefs)
             browser = webdriver.Chrome(executable_path=chrome_executable_path, options=options)
 
     return browser

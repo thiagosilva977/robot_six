@@ -2,7 +2,6 @@ import json
 import os
 from pathlib import Path
 
-
 def read_custom_configs():
     """
     This function gets custom configs.
@@ -10,6 +9,7 @@ def read_custom_configs():
     """
     current_path = Path(__file__).parent.parent.parent
     string_path = str(current_path) + '/configuracoes_programa.json'
+
 
     # Getting credentials
     with open(Path(string_path), 'r') as myfile:
@@ -35,6 +35,9 @@ def create_paths(bot_name='default'):
     REPOSITORY_PATH = Path(__file__).parent.parent.parent
 
     download_path = Path(str(REPOSITORY_PATH) + "/source/working_directory")
+
+    download_path = str(download_path).encode("latin-1").decode("utf-8")
+
     if not os.path.exists(os.path.dirname(download_path)):
         os.mkdir(os.path.dirname(download_path))
 
@@ -64,6 +67,9 @@ def path_to_pdf(bot_name='pdf_handler'):
     REPOSITORY_PATH = Path(__file__).parent.parent.parent
 
     download_path = Path(str(REPOSITORY_PATH) + "/source/working_directory")
+
+    download_path = str(download_path).encode("latin-1").decode("utf-8")
+
     if not os.path.exists(os.path.dirname(download_path)):
         os.mkdir(os.path.dirname(download_path))
 
@@ -94,6 +100,9 @@ def organize_custom_path(bot_name='default',cnpj='desconhecido'):
     REPOSITORY_PATH = read_custom_configs()
 
     custom_download_path = REPOSITORY_PATH.get('input_pasta')
+
+    custom_download_path = custom_download_path.encode("latin-1").decode("utf-8")
+
 
     download_path = Path(str(custom_download_path) + '/' + bot_name + "/test.txt")
     if not os.path.exists(os.path.dirname(download_path)):
