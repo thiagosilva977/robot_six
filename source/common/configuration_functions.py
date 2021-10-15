@@ -20,6 +20,7 @@ def read_custom_configs():
         'start_date': credential_json['BUSCA_AUTOMATIZADA']['DATA_INICIO'],
         'end_date': credential_json['BUSCA_AUTOMATIZADA']['DATA_FIM'],
         'abrir_auto': credential_json['CONTROLE']['ABRIR_AUTOMATICAMENTE_XLSX'],
+        'tempo_download': credential_json['CONTROLE']['TEMPO_DOWNLOAD'],
 
     }
     return json_inputs

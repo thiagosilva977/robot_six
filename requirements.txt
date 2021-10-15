@@ -33,3 +33,4 @@ webdriver-manager==3.4.2
 zstandard==0.15.2
 XlsxWriter
 tika
+progress

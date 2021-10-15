@@ -1,15 +1,16 @@
 import argparse
 import codecs
 import datetime
+import glob
 import os
 import random
 import re
 import string
-import sys
 import time
 import traceback
-import glob
+
 import pandas as pd
+import progress.bar
 from tika import parser as tikaparser
 
 import source.common.bs4_functions as bs4_functions
@@ -48,8 +49,6 @@ class Projetoecac:
 
         path_file = str(str(download_path) + '\\' + str(data_name) + str(".xlsx"))
 
-        print(path_file)
-
         df = pd.DataFrame(data, columns=columns)
 
         """df = df.drop(['columnsname'], axis=1)"""
@@ -70,7 +69,6 @@ class Projetoecac:
         for key, value in df['CODIGO_RECEITA'].iteritems():
             values_cod_receita.append(str(dbstyle.obtain_tipo_tributo(valor=str(value))))
 
-        print(len(values_cod_receita))
 
         df.insert(7, "DESCR_RECEITA", values_cod_receita, True)
 
@@ -119,7 +117,7 @@ class Projetoecac:
         # time.sleep(4554)
         # df.to_excel(path_file, index=False)
 
-        print('\n\nOpening file: ', path_file)
+        print('\n\nArquivo Salvo em: ', path_file)
         if open_auto:
             os.startfile(path_file)
 
@@ -144,15 +142,13 @@ class Projetoecac:
 
     def save_table_v2(self, data, columns, cnpj='NaN', nome='NaN', data_arrecadacao='NaN',open_auto=False,
                       values_pdf='[]'):
-        print('Saving Table')
 
+        print('Agrupando Informações ...')
         download_path = config_functions.organize_custom_path(bot_name='Programa e-CAC', cnpj=cnpj)
 
         data_name = str(cnpj + '_' + str(data_arrecadacao).replace('a', '_')).replace(' ', '').replace('/', '-')
 
         path_file = str(str(download_path) + '\\' + str(data_name) + str(".xlsx"))
-
-        print(path_file)
 
         df = pd.DataFrame(data, columns=columns)
 
@@ -174,7 +170,6 @@ class Projetoecac:
         for key, value in df['CODIGO_RECEITA'].iteritems():
             values_cod_receita.append(str(dbstyle.obtain_tipo_tributo(valor=str(value))))
 
-        print(len(values_cod_receita))
 
         df.insert(7, "DESCR_RECEITA", values_cod_receita, True)
 
@@ -217,8 +212,6 @@ class Projetoecac:
 
         for key, value in df['NUMERO_DOCUMENTO'].iteritems():
             exists,principal,juros,multa = self.verify_documento_existente(valor=value,lista_items=values_pdf)
-            if exists:
-                print(exists)
             values_principal.append(principal)
             values_juros.append(juros)
             values_multas.append(multa)
@@ -243,7 +236,7 @@ class Projetoecac:
         # time.sleep(4554)
         # df.to_excel(path_file, index=False)
 
-        print('\n\nOpening file: ', path_file)
+        print('\n\nArquivo Salvo em: ', path_file)
         if open_auto:
             os.startfile(path_file)
 
@@ -259,11 +252,7 @@ class Projetoecac:
         clear = lambda: os.system('cls')
         clear()
         while True:
-            clear = lambda: os.system('cls')
-            clear()
-            input('Pressione ENTER para iniciar.')
-            clear = lambda: os.system('cls')
-            clear()
+            input('\n\n\nPressione ENTER para iniciar.')
             try:
                 configs = config_functions.read_custom_configs()
 
@@ -291,7 +280,6 @@ class Projetoecac:
                 browser.switch_to.default_content()
                 print('\n##############\n\nNão foi possível acessar a tabela')
 
-
     def run_program_table_iframe_maisdados(self,browser_download_pdf):
 
         browser = func_selenium.initialize_webdriver(webdriver_type='chrome',download_path=browser_download_pdf)
@@ -309,6 +297,7 @@ class Projetoecac:
                 configs = config_functions.read_custom_configs()
 
                 open_auto = configs.get('abrir_auto')
+                tempo_download = configs.get('tempo_download')
 
                 print('Tentando capturar a tabela ..')
 
@@ -319,34 +308,44 @@ class Projetoecac:
                 browser.switch_to.frame(iframe)
                 html_inicial_pagina = browser.page_source
 
-
                 """ HANDLING DE PDFs """
 
-                botao_download = browser.find_element_by_xpath('//input[@id=""]')
+                botao_download = browser.find_element_by_xpath('//input[@id="BtnImprimirConprovante"]')
 
-                checkboxes = browser.find_elements_by_xpath('//input[@id=""]')
+                checkboxes = browser.find_elements_by_xpath('//input[contains(@id,"_CheckBoxPagamentos")]')
+
+                print('Número de Checkboxes: '+str(len(checkboxes)))
+                print('\nInicializando Download de PDFs\n')
+
+                bar = progress.bar.ChargingBar(str('Download PDFs'), max=len(checkboxes))
 
                 range_checkboxes = int(len(checkboxes)/10)+1
 
                 current_checkbox = 0
                 last_checkbox = 0
+                list_last_checked = []
                 for i in range(range_checkboxes):
+                    # check
                     for j in range(10):
-                        checkboxes[current_checkbox].click()
-                        current_checkbox = current_checkbox+1
+                        try:
+                            checkboxes[current_checkbox].click()
+                            list_last_checked.append(checkboxes[current_checkbox])
+                            current_checkbox = current_checkbox + 1
+                            bar.next()
+                        except:
+                            pass
+
                     time.sleep(1)
                     botao_download.click()
-                    time.sleep(5)
-                    last_checkbox = current_checkbox
-                    for j in range(10):
-                        checkboxes[last_checkbox].click()
-                        last_checkbox = last_checkbox - 1
-                    time.sleep(1)
-
+                    time.sleep(int(tempo_download))
+                    # uncheck
+                    for j in range(len(list_last_checked)):
+                        list_last_checked[j].click()
+                    list_last_checked.clear()
 
                 """"""""""""""""""
 
-                print('Aguardando por Downloads não concluídos...\nAguarde 10 segundos...')
+                print('\nAguardando por Downloads não concluídos...\nAguarde 10 segundos...')
                 time.sleep(10)
 
                 """ PARSING DAS INFOS """
@@ -593,7 +592,6 @@ class Projetoecac:
         except:
             self.save_table(data=data, columns=custom_columns,open_auto=open_auto)
 
-
     def pdf_to_text(self,path):
         """
         Function responsible for parse pdf to text.
@@ -602,6 +600,12 @@ class Projetoecac:
         """
         raw = tikaparser.from_file(path)
         text = raw['content']
+
+        try:
+            os.remove(path=path)
+        except:
+            pass
+
         return text
 
     def parse_pdf(self,pdf_text):
@@ -609,8 +613,6 @@ class Projetoecac:
         list_tributos = []
 
         cards = pdf_text.split('Data de Vencimento')
-
-        print('Testando arquivo ..\n')
 
         json_cars = []
 
@@ -661,11 +663,9 @@ class Projetoecac:
     def obtain_values_pdf(self,download_pdf_path):
 
         pdf_files = glob.glob(str(download_pdf_path)+"\\*.pdf")
-        print(pdf_files)
-
         list_pdf_parseds = []
-
-
+        print('\n')
+        bar = progress.bar.ChargingBar(str('Lendo PDFs'), max=len(pdf_files))
         for i in range(len(pdf_files)):
             parsed_pdf = 0
             try:
@@ -673,9 +673,10 @@ class Projetoecac:
                 try:
                     parsed_pdf = self.parse_pdf(pdf_text=text_pdf)
                 except:
-                    print('Obteve um erro: Não foi possivel extrair as informações do PDF: ',pdf_files[i])
+                    print('\nObteve um erro: Não foi possivel extrair as informações do PDF: ',pdf_files[i])
             except:
-                print('Obteve um erro: Não foi possivel transformar PDF para texto: ',pdf_files[i])
+                print('\nObteve um erro: Não foi possivel transformar PDF para texto: ',pdf_files[i])
+            bar.next()
 
 
             if len(parsed_pdf) == 0:
@@ -690,7 +691,8 @@ class Projetoecac:
 
         values_pdf = self.obtain_values_pdf(download_pdf_path=pdf_download_path)
 
-        print(len(values_pdf))
+        print('\nNúmero de Informações de PDFs capturados: '+str(len(values_pdf)))
+
         if len(values_pdf) == 0:
             print('\nSalvando da forma padrão')
             self.transform_to_data(html=html,open_auto=open_auto)
@@ -721,15 +723,11 @@ class Projetoecac:
 
                 cnpj = params.split('Nome:')[0].split('CNPJ:')[1].strip().replace('.', '').replace('-', '').replace('/', '')
 
-                print(cnpj)
-
                 nome = params.split('Data de Arrecada')[0].split('Nome: ')[1].strip()
 
-                print(nome)
 
                 data_arrecadacao = params.split('Faixa de valores:')[0].split('Data de Arrecada')[1].split(':')[1].strip()
 
-                print(data_arrecadacao)
                 self.save_table_v2(data=data, columns=custom_columns, cnpj=cnpj, nome=nome, data_arrecadacao=data_arrecadacao,
                                 open_auto=open_auto,values_pdf=values_pdf)
 
@@ -780,7 +778,8 @@ if __name__ == "__main__":
         pdf_download_path = config_functions.path_to_pdf(bot_name='teste_pdf')
         print(pdf_download_path)
 
-        botclass.transform_to_data_v2(html=html,open_auto=True,pdf_download_path=pdf_download_path)
+        #botclass.transform_to_data_v2(html=html,open_auto=True,pdf_download_path=pdf_download_path)
+        botclass.run_program_table_iframe_maisdados(browser_download_pdf=pdf_download_path)
 
     elif 'anothercommand' in execute_program:
         print('anothercommand')
