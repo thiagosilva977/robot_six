@@ -89,6 +89,8 @@ def path_to_pdf(bot_name='pdf_handler'):
 
     download_path = Path(str(REPOSITORY_PATH) + "/source/working_directory/downloads/" + bot_name)
 
+    print('repository name: ',download_path)
+
     return download_path
 
 
