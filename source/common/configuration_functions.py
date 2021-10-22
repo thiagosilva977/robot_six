@@ -67,8 +67,10 @@ def path_to_pdf(bot_name='pdf_handler'):
     REPOSITORY_PATH = Path(__file__).parent.parent.parent
 
     download_path = Path(str(REPOSITORY_PATH) + "/source/working_directory")
-
-    download_path = str(download_path).encode("latin-1").decode("utf-8")
+    try:
+        download_path = str(download_path).encode("latin-1").decode("utf-8")
+    except:
+        download_path = str(download_path)
 
     if not os.path.exists(os.path.dirname(download_path)):
         os.mkdir(os.path.dirname(download_path))
